@@ -1,69 +1,48 @@
-# Deploy a MongoDB
-
-## 1)Create the headless service configuration file.
 ```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: mongo-headless-service
-  labels:
-    app: mongodb
-spec:
-  selector:
-    app: mongodb
-  ports:
-  - port: 27017
-    targetPort: db-port
-  type: ClusterIP
-```
-
-## 2) Create the deploy configuration file.
-```yaml
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mongo-statefulset
+  name: acmeexplorer-deployment
   labels:
-    app: mongodb
+    app: acmeexplorer
 spec:
+  selector:
+    matchLabels:
+      app: acmeexplorer
   template:
     metadata:
       labels:
-        app: mongodb
+        app: acmeexplorer
     spec:
       containers:
-        - name: mongodb
-          image: mongo
+        - name: acmeexplorer
+          image: favsol26/do1819-02
           ports:
-            - containerPort: 27017
-              name: db-port
-```			  
-
-## 3)  Deploy the Service
-```bash
-$ kubectl apply -f mongo-headless-service.yaml
-service "mongo" created
+            - containerPort: 8080
+              name: http-port
+          env:
+            - name: SERVICE_NAME
+              value: app
+            - name: DB_URI
+              value: mongodb://mongodb-svc:27017/DB1
+            - name: mongoDBHostname
+              value: "mongodb-svc"
 ```
-
-## 4)  Deploy the Service
-```bash
-$ kubectl apply -f mongo-statefulset.yaml
-statefulset "mongo" created
-```
-
-## 5) Verify the service and deploy.
-```bash
-$ kubectl get service mongo
-NAME    TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)     AGE
-mongo   ClusterIP   None         <none>        27017/TCP   5s
-```
-
-```bash
-$ kubectl get statefulset mongo
-NAME    DESIRED   CURRENT   AGE
-mongo   3         3         1m
-```
-## 5) Verify logs.
-```bash
-$ kubectl logs mongo
+                
+```yaml          
+apiVersion: v1
+kind: Service
+metadata:
+  name: acmeexplorersvc
+  labels:
+    app: acmeexplorer
+spec:
+  selector:
+    app: acmeexplorer
+  ports:
+  - name: http-svc-port
+    port: 8080
+    targetPort: http-port
+    nodePort: 30082
+  type: NodePort
 ```
